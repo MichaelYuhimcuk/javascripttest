@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сортування списку</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; margin: 20px;
+        }
+        ul {
+            list-style: none; padding: 0;
+        }
+        li {
+            cursor: pointer; padding: 8px; border: 1px solid #ccc; margin: 5px 0;
+        }
+        button {
+            margin: 5px;
+            border-radius: 4px;
+            border: 2px #808080
+        }
+    </style>
+</head>
+<body>
+    <input type="text" id="itemInput" placeholder="Введіть елемент">
+    <button id="addItem">Додати</button>
+    <button id="sortList">Сортувати</button>
+    <ul id="itemList"></ul>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+    const input = document.getElementById("itemInput");
+    const addButton = document.getElementById("addItem");
+    const sortButton = document.getElementById("sortList");
+    const list = document.getElementById("itemList");
+
+    // Завантаження списку з localStorage
+    let items = JSON.parse(localStorage.getItem("items")) || [];
+    renderList();
+
+    // Додавання елемента в список
+    addButton.addEventListener("click", () => addItem());
+
+    // Додавання елемента при натисканні Enter
+    input.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") addItem();
+    });
+
+    function addItem() {
+        const text = input.value.trim();
+        if (text === "") {
+            alert("Поле не може бути порожнім!");
+            return;
+        }
+        if (items.includes(text)) {
+            alert("Такий елемент вже існує!");
+            return;
+        }
+        items.push(text);
+        updateStorage();
+        renderList();
+        input.value = ""; // Очищення поля
+    }
+
+    // Видалення елемента при кліку
+    list.addEventListener("click", (event) => {
+        if (event.target.tagName === "LI") {
+            items = items.filter(item => item !== event.target.textContent);
+            updateStorage();
+            renderList();
+        }
+    });
+
+    // Сортування списку
+    sortButton.addEventListener("click", () => {
+        items.sort((a, b) => a.localeCompare(b, "uk"));
+        updateStorage();
+        renderList();
+    });
+
+    // Оновлення localStorage
+    function updateStorage() {
+        localStorage.setItem("items", JSON.stringify(items));
+    }
+
+    // Відображення списку
+    function renderList() {
+        list.innerHTML = "";
+        items.forEach(item => {
+            const li = document.createElement("li");
+            li.textContent = item;
+            list.appendChild(li);
+        });
+    }
+});
+    </script>
+</body>
+</html>
