@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Пошук погоди</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            text-align: center;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        input {
+            padding: 10px;
+            width: 80%;
+            margin-bottom: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #error-message {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Пошук погоди за містом</h1>
+        <form id="weather-form">
+            <input type="text" id="city-input" placeholder="Введіть назву міста" required>
+            <button type="submit">Пошук</button>
+        </form>
+        <div id="weather-result"></div>
+        <div id="error-message"></div>
+    </div>
+    <script>
+        document.getElementById('weather-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const city = document.getElementById('city-input').value;
+            const cachedWeather = sessionStorage.getItem(city);
+
+            if (cachedWeather) {
+                displayWeather(JSON.parse(cachedWeather));
+            } else {
+                try {
+                    const coordinates = await getCoordinates(city);
+                    const weatherData = await getWeather(coordinates.lat, coordinates.lng);
+                    sessionStorage.setItem(city, JSON.stringify(weatherData));
+                    localStorage.setItem(city, JSON.stringify(weatherData));
+                    displayWeather(weatherData);
+                } catch (error) {
+                    displayError(error.message);
+                }
+            }
+        });
+
+        async function getCoordinates(city) {
+            const response = await fetch(`https://api.opencagedata.com/geocode/v1/json?q=${city}&key=1fc2fd53a3314b9281c1eaac5d336b01`);
+            const data = await response.json();
+
+            if (data.results.length === 0) {
+                throw new Error('Місто не знайдено. Спробуйте ще раз.');
+            }
+
+            return data.results[0].geometry;
+        }
+
+        async function getWeather(lat, lon) {
+            const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,weathercode,windspeed_10m`);
+            const data = await response.json();
+
+            if (!data.hourly) {
+                throw new Error('Не вдалося отримати дані про погоду. Спробуйте пізніше.');
+            }
+
+            return {
+                temperature: data.hourly.temperature_2m[0],
+                weatherDescription: getWeatherDescription(data.hourly.weathercode[0]),
+                windSpeed: data.hourly.windspeed_10m[0]
+            };
+        }
+
+        function getWeatherDescription(code) {
+            const descriptions = {
+                0: "Ясно",
+                1: "Мінлива хмарність",
+                2: "Хмарно",
+                3: "Похмуро",
+            };
+            return descriptions[code] || "Невідомі погодні умови";
+        }
+
+        function displayWeather(data) {
+            document.getElementById('weather-result').innerHTML = `
+                <p>Температура: ${data.temperature}°C</p>
+                <p>Погодні умови: ${data.weatherDescription}</p>
+                <p>Швидкість вітру: ${data.windSpeed} м/с</p>
+            `;
+            document.getElementById('error-message').textContent = '';
+        }
+
+        function displayError(message) {
+            document.getElementById('error-message').textContent = message;
+            document.getElementById('weather-result').innerHTML = '';
+        }
+    </script>
+</body>
+</html>
