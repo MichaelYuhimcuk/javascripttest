@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Динамічне налаштування теми</title>
+    <style>
+        :root {
+    --bg-color: #ffffff;
+    --text-color: #000000;
+    --primary-color: #007bff;
+    --transition-speed: 0.5s;
+}
+
+.dark-theme {
+    --bg-color: #222;
+    --text-color: #fff;
+    --primary-color: #ff9800;
+}
+
+.custom-theme {
+    transition: background-color var(--transition-speed), color var(--transition-speed);
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: Arial, sans-serif;
+    text-align: center;
+    padding: 20px;
+    transition: background-color 0.5s ease, color 0.5s ease;
+}
+
+.container {
+    max-width: 500px;
+    margin: auto;
+}
+
+button {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 10px;
+    margin-top: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    border-radius: 12px;
+}
+
+button:hover {
+    background-color: darken(var(--primary-color), 10%);
+}
+
+.hidden {
+    display: none;
+}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><p style="font-variant:small-caps;">Тема сайту</p></h1>
+        <p style="font-variant:small-caps;">Обирайте зручну для вас тему та налаштовуйте власні кольори.</p>
+
+        <label for="theme-select"><p style="font-variant:small-caps;">Оберіть тему:</p></label>
+        <select id="theme-select">
+            <option value="light">Світла</option>
+            <option value="dark">Темна</option>
+            <option value="custom">Користувацька</option>
+        </select>
+
+        <div id="custom-colors" class="hidden">
+            <label>Основний колір: <input type="color" id="primary-color"></label>
+            <label>Фон: <input type="color" id="bg-color"></label>
+            <button id="save-colors">Зберегти</button>
+        </div>
+    </div>
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+    const themeSelect = document.getElementById("theme-select");
+    const customColorsSection = document.getElementById("custom-colors");
+    const primaryColorInput = document.getElementById("primary-color");
+    const bgColorInput = document.getElementById("bg-color");
+    const saveColorsBtn = document.getElementById("save-colors");
+
+    const savedTheme = localStorage.getItem("theme") || "light";
+    themeSelect.value = savedTheme;
+    applyTheme(savedTheme);
+
+    if (savedTheme === "custom") {
+        const savedPrimaryColor = localStorage.getItem("primaryColor");
+        const savedBgColor = localStorage.getItem("bgColor");
+        if (savedPrimaryColor && savedBgColor) {
+            applyCustomColors(savedPrimaryColor, savedBgColor);
+            primaryColorInput.value = savedPrimaryColor;
+            bgColorInput.value = savedBgColor;
+        }
+        customColorsSection.classList.remove("hidden");
+    }
+
+    themeSelect.addEventListener("change", (e) => {
+        const selectedTheme = e.target.value;
+        localStorage.setItem("theme", selectedTheme);
+        applyTheme(selectedTheme);
+    });
+
+    saveColorsBtn.addEventListener("click", () => {
+        const newPrimaryColor = primaryColorInput.value;
+        const newBgColor = bgColorInput.value;
+        localStorage.setItem("primaryColor", newPrimaryColor);
+        localStorage.setItem("bgColor", newBgColor);
+        applyCustomColors(newPrimaryColor, newBgColor);
+    });
+
+    function applyTheme(theme) {
+        document.body.classList.remove("dark-theme", "custom-theme");
+
+        if (theme === "dark") {
+            document.body.classList.add("dark-theme");
+            customColorsSection.classList.add("hidden");
+        } else if (theme === "custom") {
+            document.body.classList.add("custom-theme");
+            customColorsSection.classList.remove("hidden");
+            const savedPrimaryColor = localStorage.getItem("primaryColor") || "#007bff";
+            const savedBgColor = localStorage.getItem("bgColor") || "#ffffff";
+            applyCustomColors(savedPrimaryColor, savedBgColor);
+        } else {
+            customColorsSection.classList.add("hidden");
+        }
+    }
+
+    function applyCustomColors(primary, bg) {
+        document.documentElement.style.setProperty("--primary-color", primary);
+        document.documentElement.style.setProperty("--bg-color", bg);
+    }
+});
+</script>
+</body>
+</html>
